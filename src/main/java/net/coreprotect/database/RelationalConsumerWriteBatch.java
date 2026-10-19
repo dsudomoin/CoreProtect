@@ -34,6 +34,7 @@ public final class RelationalConsumerWriteBatch implements ConsumerWriteBatch {
     private static final int ENTITY_MAP_BATCH = 13;
     private static final int BLOCK_DATA_BATCH = 14;
     private static final int ENTITY_KILL_LINK_BATCH = 15;
+    private static final int VIRTUAL_CONTAINER_MAP_BATCH = 16;
     private static final int INITIAL_DUCKDB_BLOCK_ID_RESERVATION = 256;
     private static final int MAXIMUM_DUCKDB_BLOCK_ID_RESERVATION = 65536;
     private static final long[] EMPTY_ROW_IDS = new long[0];
@@ -41,7 +42,7 @@ public final class RelationalConsumerWriteBatch implements ConsumerWriteBatch {
     private final Connection connection;
     private final DatabaseType databaseType;
     private final Statement transactionStatement;
-    private final PreparedStatement[] batchStatements = new PreparedStatement[16];
+    private final PreparedStatement[] batchStatements = new PreparedStatement[17];
     private final List<PreparedStatement> statements = new ArrayList<>();
 
     private PreparedStatement blockReturningStatement;
@@ -254,6 +255,9 @@ public final class RelationalConsumerWriteBatch implements ConsumerWriteBatch {
                 break;
             case MATERIAL:
                 statement = batchStatement(Database.MATERIAL, MATERIAL_BATCH);
+                break;
+            case VIRTUAL_CONTAINER:
+                statement = batchStatement(Database.VIRTUAL_CONTAINER_MAP, VIRTUAL_CONTAINER_MAP_BATCH);
                 break;
             case WORLD:
                 statement = batchStatement(Database.WORLD, WORLD_BATCH);

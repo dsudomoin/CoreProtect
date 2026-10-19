@@ -760,7 +760,7 @@ public class Database extends Queue {
         }
     }
 
-    static final List<String> DATABASE_TABLES = Arrays.asList("art_map", "block", "chat", "command", "container", "entity_container", "entity_interaction", "item", "database_lock", "entity", "entity_spawn", "entity_map", "material_map", "blockdata_map", "session", "sign", "skull", "user", "username_log", "version", "world");
+    static final List<String> DATABASE_TABLES = Arrays.asList("art_map", "block", "chat", "command", "container", "entity_container", "entity_interaction", "item", "database_lock", "entity", "entity_spawn", "entity_map", "material_map", "blockdata_map", "session", "sign", "skull", "user", "username_log", "version", "world", "virtual_container", "virtual_container_map");
 
     public static void createDatabaseTables(String prefix, boolean forcePrefix, Connection forceConnection, boolean mySQL, boolean purge) {
         createDatabaseTables(prefix, forcePrefix, forceConnection, mySQL ? DatabaseType.MYSQL : DatabaseType.SQLITE, purge);
@@ -889,6 +889,14 @@ public class Database extends Queue {
 
         // Version
         statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "version(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),time int,version varchar(16)) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
+
+        // Virtual container
+        index = ", INDEX(container_id,time), INDEX(user,time), INDEX(type,time)";
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "virtual_container(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid), time int, user int, container_id int NOT NULL, type int, data int, amount int, metadata mediumblob, action tinyint, rolled_back tinyint" + index + ") ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
+
+        // Virtual container map
+        index = ", INDEX(id), INDEX(container)";
+        statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "virtual_container_map(rowid int NOT NULL AUTO_INCREMENT,PRIMARY KEY(rowid),id int,container varchar(191)" + index + ") ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4");
 
         // World
         index = ", INDEX(id)";
@@ -1114,6 +1122,12 @@ public class Database extends Queue {
         if (!tableData.contains(prefix + "version")) {
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "version (time INTEGER, version TEXT);");
         }
+        if (!tableData.contains(prefix + "virtual_container")) {
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "virtual_container (time INTEGER, user INTEGER, container_id INTEGER NOT NULL, type INTEGER, data INTEGER, amount INTEGER, metadata BLOB, action INTEGER, rolled_back INTEGER);");
+        }
+        if (!tableData.contains(prefix + "virtual_container_map")) {
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "virtual_container_map (id INTEGER, container TEXT);");
+        }
         if (!tableData.contains(prefix + "world")) {
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + prefix + "world (id INTEGER, world TEXT);");
         }
@@ -1163,6 +1177,11 @@ public class Database extends Queue {
             createSQLiteIndex(statement, indexData, attachDatabase, "user_index", prefix + "user(user)");
             createSQLiteIndex(statement, indexData, attachDatabase, "uuid_index", prefix + "user(uuid)");
             createSQLiteIndex(statement, indexData, attachDatabase, "username_log_uuid_index", prefix + "username_log(uuid,user)");
+            createSQLiteIndex(statement, indexData, attachDatabase, "virtual_container_index", prefix + "virtual_container(container_id,time)");
+            createSQLiteIndex(statement, indexData, attachDatabase, "virtual_container_user_index", prefix + "virtual_container(user,time)");
+            createSQLiteIndex(statement, indexData, attachDatabase, "virtual_container_type_index", prefix + "virtual_container(type,time)");
+            createSQLiteIndex(statement, indexData, attachDatabase, "virtual_container_map_id_index", prefix + "virtual_container_map(id)");
+            createSQLiteIndex(statement, indexData, attachDatabase, "virtual_container_map_container_index", prefix + "virtual_container_map(container)");
             createSQLiteIndex(statement, indexData, attachDatabase, "world_id_index", prefix + "world(id)");
             if (createChatMessagePrefixIndex) {
                 createSQLiteIndex(statement, indexData, attachDatabase, "chat_message_prefix_index", prefix + "chat(substr(message,1,16) COLLATE NOCASE)");

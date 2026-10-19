@@ -477,6 +477,9 @@ public class Process {
                                 case Process.BLOCKDATA_INSERT:
                                     BlockDataInsertProcess.process(writeBatch, statement, i, object, forceData);
                                     break;
+                                case Process.VIRTUAL_CONTAINER_INSERT:
+                                    VirtualContainerInsertProcess.process(writeBatch, statement, i, object, forceData);
+                                    break;
                                 case Process.ENTITY_SPAWN_LOG:
                                     if (!(object instanceof EntitySpawnData)) {
                                         break;
