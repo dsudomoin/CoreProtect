@@ -11,6 +11,7 @@ public interface ConsumerWriteBatch extends AutoCloseable {
         BLOCK_DATA,
         ENTITY,
         MATERIAL,
+        VIRTUAL_CONTAINER,
         WORLD
     }
 

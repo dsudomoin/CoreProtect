@@ -60,6 +60,8 @@ public class Database extends Queue {
     public static final int ENTITY_SPAWN = 14;
     public static final int ENTITY_CONTAINER = 15;
     public static final int ENTITY_INTERACTION = 16;
+    public static final int VIRTUAL_CONTAINER = 17;
+    public static final int VIRTUAL_CONTAINER_MAP = 18;
 
     public static final int DATABASE_LOCK_INACTIVE = 0;
     public static final int DATABASE_LOCK_ACTIVE = 1;
@@ -96,6 +98,8 @@ public class Database extends Queue {
         SQL_QUERIES.put(ENTITY_SPAWN, "INSERT INTO %sprefix%entity_spawn (time, uuid, wid, current_wid, origin_x, origin_y, origin_z, x, y, z, yaw, pitch, data, removed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         SQL_QUERIES.put(ENTITY_CONTAINER, "INSERT INTO %sprefix%entity_container (time, %user%, entity_spawn_rowid, wid, x, y, z, type, data, amount, metadata, action, rolled_back) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         SQL_QUERIES.put(ENTITY_INTERACTION, "INSERT INTO %sprefix%entity_interaction (time, %user%, entity_spawn_rowid, wid, x, y, z, type, action, metadata, rolled_back) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        SQL_QUERIES.put(VIRTUAL_CONTAINER, "INSERT INTO %sprefix%virtual_container (time, %user%, container_id, type, data, amount, metadata, action, rolled_back) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        SQL_QUERIES.put(VIRTUAL_CONTAINER_MAP, "INSERT INTO %sprefix%virtual_container_map (id, container) VALUES (?, ?)");
     }
 
     public static void beginTransaction(Statement statement, boolean isMySQL) throws SQLException {

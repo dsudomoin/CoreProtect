@@ -79,6 +79,9 @@ public class ConfigHandler extends Queue {
         ),
         WORLDS(
                 ReferenceKind.WORLD
+        ),
+        VIRTUAL_CONTAINERS(
+                ReferenceKind.VIRTUAL_CONTAINER
         );
 
         private final ReferenceKind kind;
