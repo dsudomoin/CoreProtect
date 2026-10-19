@@ -260,6 +260,9 @@ public final class ClickHouseConsumerWriteBatch implements ConsumerWriteBatch {
                 case MATERIAL:
                     events().addMaterialMap(id, requiredValue);
                     break;
+                case VIRTUAL_CONTAINER:
+                    events().addVirtualContainerMap(id, requiredValue);
+                    break;
                 case WORLD:
                     events().addWorld(id, requiredValue);
                     break;
@@ -303,7 +306,7 @@ public final class ClickHouseConsumerWriteBatch implements ConsumerWriteBatch {
 
     @Override
     public void addVirtualContainer(int batchCount, int time, int userId, int containerId, int type, int data, int amount, byte[] metadata, int action, int rolledBack) throws Exception {
-        throw new SQLException("ClickHouse does not store virtual containers yet");
+        events().addVirtualContainer(time, userId, containerId, type, data, amount, metadata, action, rolledBack);
     }
 
     @Override
@@ -591,6 +594,8 @@ public final class ClickHouseConsumerWriteBatch implements ConsumerWriteBatch {
                 return ClickHouseFamily.ENTITY_MAP;
             case MATERIAL:
                 return ClickHouseFamily.MATERIAL_MAP;
+            case VIRTUAL_CONTAINER:
+                return ClickHouseFamily.VIRTUAL_CONTAINER_MAP;
             case WORLD:
                 return ClickHouseFamily.WORLD;
             default:
@@ -608,6 +613,8 @@ public final class ClickHouseConsumerWriteBatch implements ConsumerWriteBatch {
                 return "entity";
             case MATERIAL:
                 return "material";
+            case VIRTUAL_CONTAINER:
+                return "container";
             case WORLD:
                 return "world";
             default:
