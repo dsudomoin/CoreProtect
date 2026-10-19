@@ -25,6 +25,7 @@ import net.coreprotect.event.CoreProtectPreLogEvent;
 import net.coreprotect.model.entity.EntityContainerTransaction;
 import net.coreprotect.model.entity.EntitySpawnIdentity;
 import net.coreprotect.model.item.ItemTransactionActions;
+import net.coreprotect.model.item.VirtualContainerTransaction;
 import net.coreprotect.thread.CacheHandler;
 import net.coreprotect.utility.BlockUtils;
 import net.coreprotect.utility.HopperTransactionUtils;
@@ -249,6 +250,24 @@ public class ContainerLogger extends Queue {
         logEntityTransaction(preparedStmtContainer, batchCount, player, identity, currentLocation, newInventory, ItemTransactionActions.ADD);
     }
 
+    public static void logVirtual(ConsumerWriteBatch preparedStmtContainer, int batchCount, String player, VirtualContainerTransaction transaction) throws Exception {
+        if (transaction == null || ConfigHandler.isBlacklisted(player)) {
+            return;
+        }
+
+        ItemStack[] oldInventory = transaction.getOldContents();
+        ItemStack[] newInventory = transaction.getNewContents();
+        if (ItemUtils.compareContainers(oldInventory, newInventory)) {
+            return;
+        }
+
+        subtractSharedItems(oldInventory, newInventory);
+        ItemUtils.mergeItems(Material.CHEST, oldInventory);
+        ItemUtils.mergeItems(Material.CHEST, newInventory);
+        logVirtualTransaction(preparedStmtContainer, batchCount, player, transaction, oldInventory, ItemTransactionActions.REMOVE);
+        logVirtualTransaction(preparedStmtContainer, batchCount, player, transaction, newInventory, ItemTransactionActions.ADD);
+    }
+
     protected static void logTransaction(ConsumerWriteBatch preparedStmt, int batchCount, String user, Material type, String faceData, ItemStack[] items, int action, Location location) {
         logTransaction(preparedStmt, batchCount, user, type, faceData, items, action, location, null, true);
     }
@@ -353,6 +372,39 @@ public class ContainerLogger extends Queue {
             int time = (int) (System.currentTimeMillis() / 1000L);
             int typeId = MaterialUtils.getBlockId(item.getType().name(), true);
             ContainerStatement.insertEntity(preparedStmt, batchCount, time, userId, identity.getRowId(), wid, x, y, z, typeId, 0, item.getAmount(), metadata, action, 0);
+            slot++;
+        }
+    }
+
+    private static void logVirtualTransaction(ConsumerWriteBatch preparedStmt, int batchCount, String user, VirtualContainerTransaction transaction, ItemStack[] items, int action) throws Exception {
+        int slot = 0;
+        for (ItemStack item : items) {
+            if (item == null || item.getAmount() <= 0 || BlockUtils.isAir(item.getType())) {
+                slot++;
+                continue;
+            }
+            if (ConfigHandler.isFilterBlacklisted(user, item.getType().getKey().toString())) {
+                slot++;
+                continue;
+            }
+
+            List<List<Map<String, Object>>> metadata = ItemMetaHandler.serialize(item, Material.CHEST, null, slot);
+            if (metadata.isEmpty()) {
+                metadata = null;
+            }
+
+            CoreProtectPreLogEvent event = new CoreProtectPreLogEvent(user, null, CoreProtectPreLogEvent.Action.VIRTUAL_CONTAINER_TRANSACTION, action, item.getType(), null, transaction.getKey());
+            if (Config.getGlobal().API_ENABLED && !Bukkit.isPrimaryThread()) {
+                CoreProtect.getInstance().getServer().getPluginManager().callEvent(event);
+            }
+            if (event.isCancelled()) {
+                return;
+            }
+
+            int userId = UserStatement.getId(preparedStmt, event.getUser(), true);
+            int containerId = preparedStmt.resolveVirtualContainerId(transaction.getKey());
+            int typeId = MaterialUtils.getBlockId(item.getType().name(), true);
+            ContainerStatement.insertVirtual(preparedStmt, batchCount, transaction.getTime(), userId, containerId, typeId, 0, item.getAmount(), metadata, action, 0);
             slot++;
         }
     }

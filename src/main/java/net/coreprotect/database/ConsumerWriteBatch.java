@@ -33,6 +33,8 @@ public interface ConsumerWriteBatch extends AutoCloseable {
 
     int resolveUserId(String user, String uuid) throws Exception;
 
+    int resolveVirtualContainerId(String key) throws Exception;
+
     void recordUsername(String user, String uuid, int retainHistory, int time) throws Exception;
 
     void updateDatabaseLock(int status, int time) throws Exception;
@@ -48,6 +50,8 @@ public interface ConsumerWriteBatch extends AutoCloseable {
     void addContainer(int batchCount, int time, int userId, int worldId, int x, int y, int z, int type, int data, int amount, byte[] metadata, int action, int rolledBack) throws Exception;
 
     void addEntityContainer(int batchCount, int time, int userId, int entitySpawnRowId, int worldId, int x, int y, int z, int type, int data, int amount, byte[] metadata, int action, int rolledBack) throws Exception;
+
+    void addVirtualContainer(int batchCount, int time, int userId, int containerId, int type, int data, int amount, byte[] metadata, int action, int rolledBack) throws Exception;
 
     void addItem(int batchCount, int time, int userId, int worldId, int x, int y, int z, int type, byte[] data, int amount, int action, int rolledBack) throws Exception;
 

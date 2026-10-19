@@ -337,6 +337,9 @@ public class Process {
                                 case Process.CONTAINER_TRANSACTION:
                                     ContainerTransactionProcess.process(writeBatch, writeBatch, i, processId, id, blockType, forceData, user, object);
                                     break;
+                                case Process.VIRTUAL_CONTAINER_TRANSACTION:
+                                    ContainerTransactionProcess.processVirtual(writeBatch, i, user, object);
+                                    break;
                                 case Process.ENTITY_CONTAINER_TRANSACTION:
                                     EntityContainerTransaction transaction = (EntityContainerTransaction) object;
                                     EntitySpawnIdentity identity = entitySpawnIdentities.get(transaction.getEntityUuid());

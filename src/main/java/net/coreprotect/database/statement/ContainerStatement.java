@@ -34,4 +34,17 @@ public class ContainerStatement {
             throw new SQLException("Unable to write entity container transaction", exception);
         }
     }
+
+    public static void insertVirtual(ConsumerWriteBatch batch, int batchCount, int time, int id, int containerId, int type, int data, int amount, Object metadata, int action, int rolledBack) throws SQLException {
+        byte[] byteData = ItemUtils.convertByteData(metadata);
+        try {
+            batch.addVirtualContainer(batchCount, time, id, containerId, type, data, amount, byteData, action, rolledBack);
+        }
+        catch (SQLException exception) {
+            throw exception;
+        }
+        catch (Exception exception) {
+            throw new SQLException("Unable to write virtual container transaction", exception);
+        }
+    }
 }

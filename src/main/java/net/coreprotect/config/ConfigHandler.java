@@ -773,6 +773,10 @@ public class ConfigHandler extends Queue {
         }
     }
 
+    public static synchronized void cacheIdentifier(CacheType type, int id, String value) {
+        identifierStore(type.kind).store(id, value);
+    }
+
     public static synchronized void uncacheIdentifier(ReferenceKind kind, int id, String value) {
         IdentifierStore store = identifierStore(kind);
         store.values.get().remove(value, Integer.valueOf(id));
