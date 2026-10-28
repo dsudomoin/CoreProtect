@@ -1,6 +1,8 @@
 package net.coreprotect.database.logger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -377,20 +379,14 @@ public class ContainerLogger extends Queue {
     }
 
     private static void logVirtualTransaction(ConsumerWriteBatch preparedStmt, int batchCount, String user, VirtualContainerTransaction transaction, ItemStack[] items, int action) throws Exception {
-        int slot = 0;
+        ItemStack[] before = transaction.getOldContents();
+        ItemStack[] after = transaction.getNewContents();
         for (ItemStack item : items) {
             if (item == null || item.getAmount() <= 0 || BlockUtils.isAir(item.getType())) {
-                slot++;
                 continue;
             }
             if (ConfigHandler.isFilterBlacklisted(user, item.getType().getKey().toString())) {
-                slot++;
                 continue;
-            }
-
-            List<List<Map<String, Object>>> metadata = ItemMetaHandler.serialize(item, Material.CHEST, null, slot);
-            if (metadata.isEmpty()) {
-                metadata = null;
             }
 
             CoreProtectPreLogEvent event = new CoreProtectPreLogEvent(user, null, CoreProtectPreLogEvent.Action.VIRTUAL_CONTAINER_TRANSACTION, action, item.getType(), null, transaction.getKey());
@@ -404,9 +400,49 @@ public class ContainerLogger extends Queue {
             int userId = UserStatement.getId(preparedStmt, event.getUser(), true);
             int containerId = preparedStmt.resolveVirtualContainerId(transaction.getKey());
             int typeId = MaterialUtils.getBlockId(item.getType().name(), true);
-            ContainerStatement.insertVirtual(preparedStmt, batchCount, transaction.getTime(), userId, containerId, typeId, 0, item.getAmount(), metadata, action, 0);
-            slot++;
+            for (Map.Entry<Integer, Integer> slot : getVirtualSlots(item, action == ItemTransactionActions.ADD, before, after).entrySet()) {
+                List<List<Map<String, Object>>> metadata = ItemMetaHandler.serialize(item, Material.CHEST, null, slot.getKey());
+                if (slot.getKey() >= 0) {
+                    // stored like the slot of an armor stand item, which populateItemStack reads back
+                    Map<String, Object> slotData = new HashMap<>();
+                    slotData.put("slot", slot.getKey());
+                    List<Map<String, Object>> slotList = new ArrayList<>();
+                    slotList.add(slotData);
+                    metadata.add(slotList);
+                }
+                ContainerStatement.insertVirtual(preparedStmt, batchCount, transaction.getTime(), userId, containerId, typeId, 0, slot.getValue(), metadata.isEmpty() ? null : metadata, action, 0);
+            }
         }
+    }
+
+    /**
+     * Splits the logged change of an item over the slots where that item increased (addition) or decreased (removal),
+     * in slot order. Slots are only known when the two snapshots are index-aligned: the same length, or one of them
+     * empty. The amount no slot accounts for is returned under slot -1.
+     */
+    private static Map<Integer, Integer> getVirtualSlots(ItemStack item, boolean addition, ItemStack[] before, ItemStack[] after) {
+        Map<Integer, Integer> slots = new LinkedHashMap<>();
+        int remaining = item.getAmount();
+        if (before.length == after.length || before.length == 0 || after.length == 0) {
+            int length = Math.max(before.length, after.length);
+            for (int slot = 0; slot < length && remaining > 0; slot++) {
+                int change = getSlotAmount(after, slot, item) - getSlotAmount(before, slot, item);
+                int amount = Math.min(remaining, addition ? change : -change);
+                if (amount > 0) {
+                    slots.put(slot, amount);
+                    remaining -= amount;
+                }
+            }
+        }
+        if (remaining > 0) {
+            slots.put(-1, remaining);
+        }
+        return slots;
+    }
+
+    private static int getSlotAmount(ItemStack[] items, int slot, ItemStack item) {
+        ItemStack slotItem = slot < items.length ? items[slot] : null;
+        return slotItem != null && slotItem.isSimilar(item) ? slotItem.getAmount() : 0;
     }
 
     private static boolean samePosition(Location first, Location second) {
