@@ -395,7 +395,7 @@ public class Rollback extends RollbackUtil {
                     entitySpawnContext.cancel();
                 }
             }
-            VirtualContainerRollbackHandler.reportSkipped(virtualContainerWork, finalUserString);
+            int skippedVirtualChanges = VirtualContainerRollbackHandler.reportSkipped(virtualContainerWork, finalUserString);
 
             chunkList.clear();
             dataList.clear();
@@ -417,6 +417,9 @@ public class Rollback extends RollbackUtil {
 
             if (user != null) {
                 RollbackComplete.output(user, location, checkUsers, restrictList, excludeList, excludeUserList, actionList, timeString, chunkCount, totalSeconds, itemCount, blockCount, entityCount, rollbackType, radius, verbose, restrictWorld, preview);
+                if (skippedVirtualChanges > 0) {
+                    Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.ROLLBACK_SKIPPED, Integer.toString(skippedVirtualChanges), (skippedVirtualChanges == 1 ? Selector.FIRST : Selector.SECOND)));
+                }
             }
 
             list = LookupConverter.convertRawLookup(statement, lookupList);
