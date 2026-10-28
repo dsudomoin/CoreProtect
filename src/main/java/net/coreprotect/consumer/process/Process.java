@@ -80,6 +80,7 @@ public class Process {
     public static final int SIGN_ROLLBACK_UPDATE = 36;
     public static final int VIRTUAL_CONTAINER_TRANSACTION = 37;
     public static final int VIRTUAL_CONTAINER_INSERT = 38;
+    public static final int VIRTUAL_CONTAINER_ROLLBACK_UPDATE = 39;
 
     public static int lastLockUpdate = 0;
     private static volatile int currentConsumerSize = 0;
@@ -112,7 +113,7 @@ public class Process {
     }
 
     public static boolean isRollbackPublication(int action, Object object) {
-        if (action == ROLLBACK_UPDATE || action == SIGN_ROLLBACK_UPDATE || action == CONTAINER_ROLLBACK_UPDATE || action == INVENTORY_ROLLBACK_UPDATE || action == INVENTORY_CONTAINER_ROLLBACK_UPDATE || action == BLOCK_INVENTORY_ROLLBACK_UPDATE || action == ENTITY_CONTAINER_ROLLBACK_UPDATE || action == ENTITY_CONTAINER_TRANSITION_UPDATE) {
+        if (action == ROLLBACK_UPDATE || action == SIGN_ROLLBACK_UPDATE || action == CONTAINER_ROLLBACK_UPDATE || action == INVENTORY_ROLLBACK_UPDATE || action == INVENTORY_CONTAINER_ROLLBACK_UPDATE || action == BLOCK_INVENTORY_ROLLBACK_UPDATE || action == ENTITY_CONTAINER_ROLLBACK_UPDATE || action == ENTITY_CONTAINER_TRANSITION_UPDATE || action == VIRTUAL_CONTAINER_ROLLBACK_UPDATE) {
             return true;
         }
         if (action != ENTITY_SPAWN_UPDATE || !(object instanceof EntitySpawnData)) {
@@ -417,6 +418,9 @@ public class Process {
                                     break;
                                 case Process.BLOCK_INVENTORY_ROLLBACK_UPDATE:
                                     RollbackUpdateProcess.process(writeBatch, processId, id, forceData, RollbackUpdateTargets.BLOCK_INVENTORY);
+                                    break;
+                                case Process.VIRTUAL_CONTAINER_ROLLBACK_UPDATE:
+                                    RollbackUpdateProcess.process(writeBatch, processId, id, forceData, RollbackUpdateTargets.VIRTUAL_CONTAINER);
                                     break;
                                 case Process.ENTITY_CONTAINER_ROLLBACK_UPDATE:
                                     List<Object[]> entityContainerRows = Consumer.consumerObjectArrayList.get(processId).get(id);

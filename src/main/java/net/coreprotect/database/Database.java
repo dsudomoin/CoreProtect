@@ -689,6 +689,9 @@ public class Database extends Queue {
         if (table == RollbackUpdateTargets.ENTITY_CONTAINER) {
             return "entity_container";
         }
+        if (table == RollbackUpdateTargets.VIRTUAL_CONTAINER) {
+            return "virtual_container";
+        }
         if (RollbackUpdateTargets.updatesContainerTable(table)) {
             return "container";
         }

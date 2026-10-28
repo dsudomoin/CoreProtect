@@ -739,6 +739,9 @@ public final class ClickHouseConsumerWriteBatch implements ConsumerWriteBatch {
         if (target == RollbackUpdateTargets.ENTITY_CONTAINER) {
             return ClickHouseFamily.ENTITY_CONTAINER;
         }
+        if (target == RollbackUpdateTargets.VIRTUAL_CONTAINER) {
+            return ClickHouseFamily.VIRTUAL_CONTAINER;
+        }
         if (RollbackUpdateTargets.updatesContainerTable(target)) {
             return ClickHouseFamily.CONTAINER;
         }
