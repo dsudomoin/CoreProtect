@@ -1186,10 +1186,6 @@ public class LookupRaw extends Queue {
             }
 
             if (virtualContainer != null) {
-                if (!lookup) {
-                    // a rollback would update these rows by rowid in the block container table
-                    throw new IllegalArgumentException("Virtual containers cannot be rolled back or restored");
-                }
                 if (!count && !selectPageRows) {
                     rows = "rowid as id,time," + userColumn + ",0 as wid,0 as x,0 as y,0 as z,type,metadata,data,amount,action,rolled_back,container_id as entity_spawn_rowid";
                 }

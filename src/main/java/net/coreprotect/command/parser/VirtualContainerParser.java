@@ -1,12 +1,20 @@
 package net.coreprotect.command.parser;
 
+import java.util.List;
 import java.util.Locale;
 
+import org.bukkit.command.CommandSender;
+
+import net.coreprotect.language.Phrase;
+import net.coreprotect.model.action.LookupActions;
+import net.coreprotect.model.item.ItemTransactionActions;
 import net.coreprotect.model.lookup.VirtualContainerTarget;
+import net.coreprotect.utility.Chat;
+import net.coreprotect.utility.Color;
 import net.coreprotect.utility.VirtualContainerUtils;
 
 /**
- * Parser for the container: lookup parameter, which selects a virtual container type or a single container
+ * Parser for the container: parameter, which selects a virtual container type or a single container
  */
 public final class VirtualContainerParser {
 
@@ -38,8 +46,36 @@ public final class VirtualContainerParser {
         return new ParseResult(count > 0, target);
     }
 
-    public static boolean isParameter(String argument) {
-        return normalize(argument).startsWith(PARAMETER);
+    /**
+     * Checks container: against the other parameters, then adds its target to the include list, and a:container to
+     * the actions when none were given. Virtual containers have no location, so radius, world and #container are
+     * rejected.
+     *
+     * @return False after telling the user why the parameters can't be combined
+     */
+    public static boolean addTarget(CommandSender user, ParseResult result, String usage, boolean located, List<String> users, List<Integer> actions, List<Object> include) {
+        if (result.getTarget() == null) {
+            Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, usage));
+            return false;
+        }
+        if (located) {
+            Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INVALID_PARAMETER, "r:"));
+            return false;
+        }
+        if (users.contains("#container")) {
+            Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INVALID_PARAMETER, "#container"));
+            return false;
+        }
+        boolean containerActions = actions.stream().allMatch(action -> action == LookupActions.CONTAINER || action == ItemTransactionActions.REMOVE || action == ItemTransactionActions.ADD);
+        if (!actions.isEmpty() && (!actions.contains(LookupActions.CONTAINER) || !containerActions)) {
+            Chat.sendMessage(user, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INCOMPATIBLE_ACTION, PARAMETER));
+            return false;
+        }
+        if (actions.isEmpty()) {
+            actions.add(LookupActions.CONTAINER);
+        }
+        include.add(result.getTarget());
+        return true;
     }
 
     private static VirtualContainerTarget parseTarget(String value) {
