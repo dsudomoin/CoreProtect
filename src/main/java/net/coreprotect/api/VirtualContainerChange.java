@@ -18,7 +18,8 @@ public final class VirtualContainerChange {
     }
 
     /**
-     * @return A copy of the items to add or remove
+     * @return A copy of the items to add or remove. Logged changes are merged per item, so the amount can exceed the
+     *         maximum stack size.
      */
     public ItemStack getItem() {
         return item.clone();
