@@ -19,6 +19,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 import net.coreprotect.api.BlockAPI;
 import net.coreprotect.api.EntityAPI;
@@ -30,6 +31,7 @@ import net.coreprotect.api.QueueLookup;
 import net.coreprotect.api.SessionLookup;
 import net.coreprotect.api.SignAPI;
 import net.coreprotect.api.UsernameAPI;
+import net.coreprotect.api.VirtualContainerHandler;
 import net.coreprotect.api.result.BlockResult;
 import net.coreprotect.api.result.ContainerResult;
 import net.coreprotect.api.result.EntityResult;
@@ -46,6 +48,7 @@ import net.coreprotect.consumer.Queue;
 import net.coreprotect.database.Database;
 import net.coreprotect.database.Lookup;
 import net.coreprotect.database.rollback.Rollback;
+import net.coreprotect.database.rollback.VirtualContainerRollbackHandler;
 import net.coreprotect.language.Phrase;
 import net.coreprotect.listener.player.InventoryChangeListener;
 import net.coreprotect.model.action.LookupActions;
@@ -587,6 +590,32 @@ public class CoreProtectAPI extends Queue {
         }
 
         return Queue.queueVirtualContainerTransaction(user, new VirtualContainerTransaction(key, before, after));
+    }
+
+    /**
+     * Registers the handler that applies rollbacks and restores to a type of virtual container. Registering the type
+     * again replaces its handler. While the plugin is disabled, rollbacks and restores skip containers of this type.
+     *
+     * @param plugin
+     *            The plugin that owns the containers
+     * @param type
+     *            The container type, as passed to logVirtualContainerTransaction
+     * @param handler
+     *            The handler that applies the changes
+     * @return True if the handler was registered
+     */
+    public boolean registerVirtualContainer(Plugin plugin, NamespacedKey type, VirtualContainerHandler handler) {
+        if (!isEnabled() || plugin == null || type == null || handler == null) {
+            return false;
+        }
+
+        String typeKey = type.getNamespace() + ":" + type.getKey();
+        if (!VirtualContainerUtils.isValidType(typeKey)) {
+            return false;
+        }
+
+        VirtualContainerRollbackHandler.register(plugin, typeKey, handler);
+        return true;
     }
 
     /**
